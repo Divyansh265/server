@@ -1,17 +1,18 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Check if we are on a product page by detecting the Shopify product object
-    if (typeof Shopify !== 'undefined' && typeof Shopify.product !== 'undefined') {
-        const product = Shopify.product;
-        alert("myserver")
-        // Create a new title element
-        const newTitle = document.createElement('title');
-        newTitle.textContent = product.title; // Set the product title as the page title
+    if (typeof Shopify !== 'undefined' && Shopify.product) {
+        const productTitle = Shopify.product.title;
 
-        // Insert the new title element into the head
-        document.head.appendChild(newTitle);
+        // Create or replace the <title> tag in the head section
+        let titleTag = document.querySelector('head title');
+        if (!titleTag) {
+            titleTag = document.createElement('title');
+            document.head.appendChild(titleTag);
+        }
+        titleTag.textContent = productTitle;
 
-        console.log('Product title inserted into the head:', product.title);
+        console.log('Product title added to <head>:', productTitle);
     } else {
-        console.log('Not on a product page.');
+        console.log('This is not a product page.');
     }
 });
