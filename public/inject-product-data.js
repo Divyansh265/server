@@ -1,17 +1,18 @@
-const express = require('express');
-const path = require('path');
-const app = express();
-const PORT = process.env.PORT || 3000;
+document.addEventListener('DOMContentLoaded', function () {
 
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
+    if (typeof Shopify !== 'undefined' && typeof Shopify.product !== 'undefined') {
+        const product = Shopify.product;
 
-// Root route
-app.get('/', (req, res) => {
-    res.send('Hello World');
-});
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+        const productTitleElement = document.querySelector('.product-title');
+
+
+        if (productTitleElement) {
+            productTitleElement.textContent = product.title;
+        } else {
+            console.error('Product title element not found.');
+        }
+    } else {
+        console.log('Not on a product page.');
+    }
 });
