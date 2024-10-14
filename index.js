@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Route to serve the JavaScript code for product title injection
-app.get('/inject-product-data.js', (req, res) => {
+app.get('/', (req, res) => {
     const jsCode = `
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof Shopify !== 'undefined' && Shopify.product) {
