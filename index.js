@@ -7,15 +7,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/alert-product-page.js', (req, res) => {
-    const jsCode = `
-        // my_script.js
-document.addEventListener("DOMContentLoaded", function() {
-    if (window.location.pathname.includes("/products/")) {
+    const jsCode = `if (window.location.pathname.includes("/products/")) {
         alert("This is the product page!");
-    }
-});
-
-    `;
+    }`;
 
     res.setHeader('Content-Type', 'application/javascript');
     res.send(jsCode);
