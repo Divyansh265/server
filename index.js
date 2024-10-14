@@ -28,28 +28,30 @@ const PORT = process.env.PORT || 3000;
 // Serve static files from the 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route to serve the updated JavaScript code for product pages
+// Route to serve the JavaScript code for product pages
 app.get('/alert-product-page.js', (req, res) => {
     const jsCode = `
-        if (window.location.pathname.includes("/products/")) {
-            if (typeof Shopify !== 'undefined' && Shopify.product) {
-                const productTitle = Shopify.product.title;
+        async function fetchProductTitle() {
+            const handle = window.location.pathname.split('/').pop(); // Get the product handle from the URL
 
-                const titleDiv = document.createElement('div');
-                titleDiv.style.position = 'fixed';
-                titleDiv.style.top = '20px';
-                titleDiv.style.right = '20px';
-                titleDiv.style.padding = '10px';
-                titleDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-                titleDiv.style.border = '1px solid #ccc';
-                titleDiv.style.zIndex = '1000';
+            try {
+                const response = await fetch('/products/' + handle + '.js'); // Fetch product data from Shopify
+                const product = await response.json();
 
-                titleDiv.innerHTML = <strong>Product Title:</strong> ${productTitle};
-
-                document.body.appendChild(titleDiv);
-            } else {
-                console.log('Product object is not available.');
+                if (product && product.title) {
+                    const titleDiv = document.createElement('div'); 
+                    titleDiv.innerHTML = '<strong>Product Title:</strong> ' + product.title;
+                    document.body.appendChild(titleDiv);
+                } else {
+                    console.log('Product not found.');
+                }
+            } catch (error) {
+                console.error('Error fetching product:', error);
             }
+        }
+
+        if (window.location.pathname.includes("/products/")) {
+            fetchProductTitle();
         }
     `;
 
