@@ -4,7 +4,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Serve static files from the 'public' folder
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
 
 // Route to serve the JavaScript code for product title injection
 app.get('/inject-product-data.js', (req, res) => {
