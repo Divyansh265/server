@@ -1,70 +1,52 @@
-// const express = require('express');
-// const path = require('path');
-// const app = express();
-// const PORT = process.env.PORT || 3000;
-
-
-// app.use(express.static(path.join(__dirname, 'public')));
-
-// app.get('/alert-product-page.js', (req, res) => {
-//     const jsCode = `if (window.location.pathname.includes("/products/")) {
-//         alert("This is the product page!");
-//     }`;
-
-//     res.setHeader('Content-Type', 'application/javascript');
-//     res.send(jsCode);
-// });
-
-// app.listen(PORT, () => {
-//     console.log(`Server running on port ${PORT}`);
-// });
-
-
 const express = require('express');
 const path = require('path');
-
-const cors = require('cors'); // Import CORS middleware
+const axios = require('axios'); // Make sure to install axios with npm install axios
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Apply CORS middleware
-app.use(cors({ origin: '*' }));
+// Replace YOUR_SHOPIFY_DOMAIN and YOUR_ACCESS_TOKEN with your actual shop domain and access token
+const SHOPIFY_DOMAIN = 'mynewopenedstore.myshopify.com'; // e.g., 'your-store.myshopify.com'
+const ACCESS_TOKEN = 'shpua_e92a2801cc55fffe66f0852a74fa5f67'; // Your access token
 
-// Serve static files (like your fetchProductTitle.js)
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.get('/alert-product-page.js', (req, res) => {
+    const jsCode = `
+        async function fetchProductTitle() {
+            const handle = window.location.pathname.split('/').pop(); // Get the product handle from URL
+            const query = \`{
+                product(handle: "\${handle}") {
+                    title
+                }
+            }\`;
 
-// New route: Fetch product details by handle from Shopify API
-app.get("/api/products/handle/:handle", async (req, res) => {
-    const productHandle = req.params.handle;
+            try {
+                const response = await fetch('https://${SHOPIFY_DOMAIN}/admin/api/2024-01/graphql.json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Access-Token': '${ACCESS_TOKEN}',
+                    },
+                    body: JSON.stringify({ query })
+                });
 
-    // Create GraphQL client with session
-    const client = new shopify.api.clients.Graphql({
-        session: res.locals.shopify.session,
-    });
-
-    try {
-        const productData = await client.request(`
-      query {
-        product(handle: "${productHandle}") {
-          title
-          id
+                const data = await response.json();
+                const title = data.data.product.title;
+                alert("Product Title: " + title);
+            } catch (error) {
+                console.error('Error fetching product title:', error);
+            }
         }
-      }
-    `);
 
-        if (productData.data.product) {
-            res.status(200).send({ product: productData.data.product });
-        } else {
-            res.status(404).send({ error: 'Product not found' });
+        if (window.location.pathname.includes("/products/")) {
+            fetchProductTitle();
         }
-    } catch (error) {
-        console.error("Error fetching product details:", error);
-        res.status(500).send({ error: 'Failed to fetch product details' });
-    }
+    `;
+
+    res.setHeader('Content-Type', 'application/javascript');
+    res.send(jsCode);
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
