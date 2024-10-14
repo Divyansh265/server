@@ -44,7 +44,7 @@ app.get('/alert-product-page.js', (req, res) => {
                 titleDiv.style.border = '1px solid #ccc';
                 titleDiv.style.zIndex = '1000';
 
-                titleDiv.innerHTML = \`<strong>Product Title:</strong> \${productTitle}\`;
+                titleDiv.innerHTML = <strong>Product Title:</strong> ${productTitle};
 
                 document.body.appendChild(titleDiv);
             } else {
