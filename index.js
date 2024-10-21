@@ -1,52 +1,143 @@
 const express = require('express');
-const path = require('path');
-const axios = require('axios'); // Make sure to install axios with npm install axios
 const app = express();
-const PORT = process.env.PORT || 3000;
+const cors = require('cors');
+app.use(cors());
+const mongoose = require('mongoose');
 
-app.use(express.static(path.join(__dirname, 'public')));
+// MongoDB connection string
+const DB = "mongodb+srv://divyanshSharma:divyanshSharma@cluster0.qdqmptw.mongodb.net/store?retryWrites=true&w=majority";
+mongoose.connect(DB)
+    .then(() => {
+        console.log("Connected to MongoDB");
+    })
+    .catch(error => {
+        console.error("Error connecting to MongoDB:", error);
+    });
 
-// Replace YOUR_SHOPIFY_DOMAIN and YOUR_ACCESS_TOKEN with your actual shop domain and access token
-const SHOPIFY_DOMAIN = 'mynewopenedstore.myshopify.com'; // e.g., 'your-store.myshopify.com'
-const ACCESS_TOKEN = 'shpua_e92a2801cc55fffe66f0852a74fa5f67'; // Your access token
+// MongoDB Shop model
+const Shop = mongoose.model('Shop', new mongoose.Schema({
+    shop: { type: String, required: true, unique: true },
+    accessToken: { type: String, required: true },
+}));
 
-app.get('/alert-product-page.js', (req, res) => {
-    const jsCode = `
-        async function fetchProductTitle() {
-            const handle = window.location.pathname.split('/').pop(); // Get the product handle from URL
-            const query = \`{
-                product(handle: "\${handle}") {
-                    title
-                }
-            }\`;
+// Route to serve the dynamic JSON-LD schema script
+app.get("/serve-schema-script/:shop/:schemaType", async (req, res) => {
+    const { shop, schemaType } = req.params;
 
-            try {
-                const response = await fetch('https://${SHOPIFY_DOMAIN}/admin/api/2024-01/graphql.json', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Shopify-Access-Token': '${ACCESS_TOKEN}',
-                    },
-                    body: JSON.stringify({ query })
-                });
+    // Fetch shop data
+    const shopData = await Shop.findOne({ shop });
 
-                const data = await response.json();
-                const title = data.data.product.title;
-                alert("Product Title: " + title);
-            } catch (error) {
-                console.error('Error fetching product title:', error);
+    if (!shopData) {
+        return res.status(404).send('Shop not found');
+    }
+
+    // Define different schema templates based on schemaType
+    const schemaTemplates = {
+        product: `{
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": "Example Product",
+            "image": "https://example.com/image.jpg",
+            "description": "Product description here.",
+            "brand": {
+                "@type": "Brand",
+                "name": "Brand Name"
             }
-        }
+        }`,
+        article: `{
+            "@context": "https://schema.org/",
+            "@type": "Article",
+            "headline": "Example Article",
+            "image": "https://example.com/article.jpg",
+            "author": "Author Name",
+            "publisher": "Publisher Name"
+        }`,
+        organization: `{
+            "@context": "https://schema.org/",
+            "@type": "Organization",
+            "name": "Organization Name",
+            "url": "https://example.com",
+            "logo": "https://example.com/logo.jpg"
+        }`,
+        breadcrumb: `{
+            "@context": "https://schema.org/",
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://example.com/"
+            }]
+        }`,
+        recipe: `{
+            "@context": "https://schema.org/",
+            "@type": "Recipe",
+            "name": "Recipe Name",
+            "image": "https://example.com/recipe.jpg",
+            "author": "Author Name",
+            "recipeCuisine": "Cuisine Type"
+        }`,
+        searchbox: `{
+            "@context": "https://schema.org/",
+            "@type": "WebSite",
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://example.com/search?q={query}",
+                "query-input": "required name=query"
+            }
+        }`,
+        sitename: `{
+            "@context": "https://schema.org/",
+            "@type": "WebSite",
+            "name": "Example Site",
+            "url": "https://example.com"
+        }`
+    };
 
-        if (window.location.pathname.includes("/products/")) {
-            fetchProductTitle();
-        }
+    // Select the correct schema based on schemaType
+    const selectedSchema = schemaTemplates[schemaType];
+
+    if (!selectedSchema) {
+        return res.status(400).send('Invalid schema type');
+    }
+
+    const scriptContent = `
+        document.addEventListener("DOMContentLoaded", () => {
+            const script = document.createElement("script");
+            script.type = "application/ld+json";
+            script.text = ${JSON.stringify(selectedSchema)};
+            document.head.appendChild(script);
+            console.log("${schemaType} schema added.");
+        });
     `;
 
     res.setHeader('Content-Type', 'application/javascript');
-    res.send(jsCode);
+    res.send(scriptContent);
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Route to remove JSON-LD schema based on schema type
+app.get("/remove-schema/:schemaType", (req, res) => {
+    const { schemaType } = req.params;
+
+    const removalScript = `
+        document.addEventListener("DOMContentLoaded", () => {
+            const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+            jsonLdScripts.forEach((script) => {
+                const schema = JSON.parse(script.textContent);
+                if (schema["@type"] === "${schemaType.charAt(0).toUpperCase() + schemaType.slice(1)}") {
+                    script.remove();
+                    console.log("${schemaType} schema removed.");
+                }
+            });
+        });
+    `;
+
+    res.setHeader('Content-Type', 'application/javascript');
+    res.send(removalScript);
+});
+
+// Server start-up
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
 });
