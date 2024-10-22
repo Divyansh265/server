@@ -339,7 +339,7 @@ app.get("/product-script.js", (req, res) => {
 
     async function insertProductSchema() {
       try {
-        const tokenResponse = await fetch(\`https://server-page-xo9v.onrender.com/check-store?shop=\${shop}\`);
+        const tokenResponse = await fetch(\`https://server-3-ress.onrender.com/check-store?shop=\${shop}\`);
         const tokenData = await tokenResponse.json();
 
         if (tokenData && tokenData.accessToken) {
@@ -437,7 +437,7 @@ app.get("/newproduct-script.js", (req, res) => {
 
     async function insertProductSchema() {
       try {
-        const tokenResponse = await fetch('https://server-page-xo9v.onrender.com/check-store?shop=' + shop);
+        const tokenResponse = await fetch('https://server-3-ress.onrender.com/check-store?shop=' + shop);
         const tokenData = await tokenResponse.json();
 
         if (tokenData && tokenData.accessToken) {
@@ -445,7 +445,7 @@ app.get("/newproduct-script.js", (req, res) => {
           const pathParts = window.location.pathname.split("/");
 
           // Fetch the isEnabled state
-          const stateResponse = await fetch('https://server-page-xo9v.onrender.com/check-schema-state/' + shop);
+          const stateResponse = await fetch('https://server-3-ress.onrender.com/check-schema-state/' + shop);
           const stateData = await stateResponse.json();
 
           // Check if on a product page
@@ -658,7 +658,7 @@ app.get("/newschema-script.js", (req, res) => {
 
     async function insertSchemaBasedOnPage() {
       try {
-        const tokenResponse = await fetch('https://server-page-xo9v.onrender.com/check-store?shop=' + shop);
+        const tokenResponse = await fetch('https://server-3-ress.onrender.com/check-store?shop=' + shop);
         const tokenData = await tokenResponse.json();
 
         if (tokenData && tokenData.accessToken) {
@@ -666,7 +666,7 @@ app.get("/newschema-script.js", (req, res) => {
           const pathParts = window.location.pathname.split("/");
 
           // Fetch the isEnabled state for all schemas
-          const stateResponse = await fetch('https://server-page-xo9v.onrender.com/check-state/' + shop);
+          const stateResponse = await fetch('https://server-3-ress.onrender.com//check-state/' + shop);
           const stateData = await stateResponse.json();
 
           // Identify the current page and inject the corresponding schema
