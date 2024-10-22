@@ -666,7 +666,7 @@ app.get("/newschema-script.js", (req, res) => {
           const pathParts = window.location.pathname.split("/");
 
           // Fetch the isEnabled state for all schemas
-          const stateResponse = await fetch('https://server-3-ress.onrender.com//check-state/' + shop);
+          const stateResponse = await fetch('https://server-3-ress.onrender.com/check-state/' + shop);
           const stateData = await stateResponse.json();
 
           // Identify the current page and inject the corresponding schema
