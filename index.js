@@ -115,7 +115,7 @@ app.get("/server-script.js", (req, res) => {
   
     async function insertProductSchema() {
       try {
-        const tokenResponse = await fetch(\`https://server-page-xo9v.onrender.com/check-store?shop=\${shop}\`);
+        const tokenResponse = await fetch(\`https://server-3-ress.onrender.com/check-store?shop=\${shop}\`);
         const tokenData = await tokenResponse.json();
   
         if (tokenData && tokenData.accessToken) {
@@ -253,7 +253,7 @@ app.get('/remove-server-script', (req, res) => {
   // JavaScript to remove the script tag
   res.send(`
     async function removeServerScript() {
-      const scriptUrl = "https://server-page-xo9v.onrender.com/server-script.js";
+      const scriptUrl = "https://server-3-ress.onrender.com/server-script.js";
       
       // Find the script tag
       const scriptTag = document.querySelector('script[src="' + scriptUrl + '"]');
@@ -277,7 +277,7 @@ app.get('/removetag/:shopname', async (req, res) => {
 
   const shop = req.params.shopname;
 
-  const scriptUrl = "https://server-page-xo9v.onrender.com/product-script.js";
+  const scriptUrl = "https://server-3-ress.onrender.com/product-script.js";
 
 
   try {
