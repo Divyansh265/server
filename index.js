@@ -2,8 +2,8 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const mongoose = require('mongoose');
-const axios = require('axios');
 
+// Middleware
 app.use(cors());
 
 // MongoDB connection string
@@ -77,31 +77,48 @@ app.get("/newproduct-script.js", (req, res) => {
               console.log("Collection schema is disabled.");
             }
           } else if (pathParts[1] === "pages") {
-            // Check for Breadcrumb, Article, etc.
             if (stateData.breadcrumbSchemaEnabled === 'true') {
               insertBreadcrumbSchema();
+            } else {
+              removeBreadcrumbSchema();
             }
+
             if (stateData.articleSchemaEnabled === 'true') {
               insertArticleSchema();
+            } else {
+              removeArticleSchema();
             }
           } else if (pathParts[1] === "video") {
             if (stateData.videoSchemaEnabled === 'true') {
               insertVideoSchema();
+            } else {
+              removeVideoSchema();
             }
           }
 
           // General schemas for all pages
           if (stateData.organizationSchemaEnabled === 'true') {
             insertOrganizationSchema();
+          } else {
+            removeOrganizationSchema();
           }
+
           if (stateData.siteNameSchemaEnabled === 'true') {
             insertSiteNameSchema();
+          } else {
+            removeSiteNameSchema();
           }
+
           if (stateData.searchBoxSchemaEnabled === 'true') {
             insertSearchBoxSchema();
+          } else {
+            removeSearchBoxSchema();
           }
+
           if (stateData.recipeSchemaEnabled === 'true') {
             insertRecipeSchema();
+          } else {
+            removeRecipeSchema();
           }
 
         } else {
@@ -159,7 +176,6 @@ app.get("/newproduct-script.js", (req, res) => {
     }
 
     // Insert various schemas
-
     function insertProductSchemaData(product, shop) {
       const schemaData = {
         "@context": "https://schema.org/",
@@ -178,7 +194,7 @@ app.get("/newproduct-script.js", (req, res) => {
           "seller": { "@type": "Organization", "name": shop }
         }
       };
-      insertSchemaToDOM(schemaData);
+      insertSchemaToDOM(schemaData, "product");
     }
 
     function insertCollectionSchemaData(collection, shop) {
@@ -189,7 +205,7 @@ app.get("/newproduct-script.js", (req, res) => {
         "description": collection.body_html.replace(/<[^>]*>/g, ""),
         "url": window.location.href
       };
-      insertSchemaToDOM(schemaData);
+      insertSchemaToDOM(schemaData, "collection");
     }
 
     function insertOrganizationSchema() {
@@ -199,7 +215,7 @@ app.get("/newproduct-script.js", (req, res) => {
         "name": shop,
         "url": window.location.href
       };
-      insertSchemaToDOM(schemaData);
+      insertSchemaToDOM(schemaData, "organization");
     }
 
     function insertBreadcrumbSchema() {
@@ -221,7 +237,7 @@ app.get("/newproduct-script.js", (req, res) => {
           }
         ]
       };
-      insertSchemaToDOM(schemaData);
+      insertSchemaToDOM(schemaData, "breadcrumb");
     }
 
     function insertVideoSchema() {
@@ -234,7 +250,7 @@ app.get("/newproduct-script.js", (req, res) => {
         "uploadDate": "2024-01-01",
         "contentUrl": window.location.href
       };
-      insertSchemaToDOM(schemaData);
+      insertSchemaToDOM(schemaData, "video");
     }
 
     function insertArticleSchema() {
@@ -246,7 +262,7 @@ app.get("/newproduct-script.js", (req, res) => {
         "datePublished": "2024-01-01",
         "url": window.location.href
       };
-      insertSchemaToDOM(schemaData);
+      insertSchemaToDOM(schemaData, "article");
     }
 
     function insertSearchBoxSchema() {
@@ -256,11 +272,11 @@ app.get("/newproduct-script.js", (req, res) => {
         "url": window.location.href,
         "potentialAction": {
           "@type": "SearchAction",
-          "target": window.location.origin + "/search?q={search_term_string}",
+          "target": window.location.href + "?q={search_term_string}",
           "query-input": "required name=search_term_string"
         }
       };
-      insertSchemaToDOM(schemaData);
+      insertSchemaToDOM(schemaData, "searchBox");
     }
 
     function insertSiteNameSchema() {
@@ -270,7 +286,7 @@ app.get("/newproduct-script.js", (req, res) => {
         "name": shop,
         "url": window.location.href
       };
-      insertSchemaToDOM(schemaData);
+      insertSchemaToDOM(schemaData, "siteName");
     }
 
     function insertRecipeSchema() {
@@ -279,51 +295,70 @@ app.get("/newproduct-script.js", (req, res) => {
         "@type": "Recipe",
         "name": "Sample Recipe",
         "recipeIngredient": ["Ingredient 1", "Ingredient 2"],
-        "recipeInstructions": "Mix all ingredients."
+        "recipeInstructions": "Instructions go here"
       };
-      insertSchemaToDOM(schemaData);
+      insertSchemaToDOM(schemaData, "recipe");
     }
 
-    // Function to insert schema data into DOM
-    function insertSchemaToDOM(schemaData) {
-      const script = document.createElement("script");
-      script.type = "application/ld+json";
+    function insertSchemaToDOM(schemaData, schemaType) {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
       script.text = JSON.stringify(schemaData);
+      script.dataset.schemaType = schemaType; // Tag the schema type for easy removal
       document.head.appendChild(script);
-      console.log("JSON-LD schema inserted:", schemaData);
     }
 
-    // Function to remove specific schemas from DOM
-    function removeProductSchema() {
-      removeSchemaFromDOM("Product");
-    }
-
-    function removeCollectionSchema() {
-      removeSchemaFromDOM("Collection");
-    }
-
-    function removeSchemaFromDOM(schemaType) {
-      const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
-      jsonLdScripts.forEach((script) => {
-        try {
-          const schemaData = JSON.parse(script.textContent);
-          if (schemaData['@type'] === schemaType) {
-            script.remove();
-            console.log(schemaType + " schema removed.");
-          }
-        } catch (error) {
-          console.error("Error parsing JSON-LD schema for removal:", error);
-        }
+    // Remove functions for each schema type
+    function removeSchemaByType(schemaType) {
+      const schemas = document.querySelectorAll('script[type="application/ld+json"][data-schema-type="' + schemaType + '"]');
+      schemas.forEach(schema => {
+        schema.remove();
+        console.log(schemaType.charAt(0).toUpperCase() + schemaType.slice(1) + " schema removed.");
       });
     }
 
-    // Call the function to manage the schema based on page type
+    function removeProductSchema() {
+      removeSchemaByType("product");
+    }
+
+    function removeCollectionSchema() {
+      removeSchemaByType("collection");
+    }
+
+    function removeOrganizationSchema() {
+      removeSchemaByType("organization");
+    }
+
+    function removeBreadcrumbSchema() {
+      removeSchemaByType("breadcrumb");
+    }
+
+    function removeVideoSchema() {
+      removeSchemaByType("video");
+    }
+
+    function removeArticleSchema() {
+      removeSchemaByType("article");
+    }
+
+    function removeSearchBoxSchema() {
+      removeSchemaByType("searchBox");
+    }
+
+    function removeSiteNameSchema() {
+      removeSchemaByType("siteName");
+    }
+
+    function removeRecipeSchema() {
+      removeSchemaByType("recipe");
+    }
+
     insertSchemaBasedOnPage();
   `);
 });
 
-// Server start-up
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
